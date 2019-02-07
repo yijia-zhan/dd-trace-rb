@@ -159,6 +159,7 @@ RSpec.describe 'Tracer integration tests' do
         parent_span.tap do
           child_span.tap do
             child_span.context.sampling_priority = 10
+            child_span.context.sampling_priority_rate = 0.5
           end.finish
         end.finish
 
@@ -166,11 +167,17 @@ RSpec.describe 'Tracer integration tests' do
       end
 
       it do
-        metric_value = parent_span.get_metric(
+        key_value = parent_span.get_metric(
           Datadog::Ext::DistributedTracing::SAMPLING_PRIORITY_KEY
         )
 
-        expect(metric_value).to eq(10)
+        expect(key_value).to eq(10)
+
+        rate_value = parent_span.get_metric(
+          Datadog::Ext::DistributedTracing::SAMPLING_PRIORITY_RATE
+        )
+
+        expect(rate_value).to eq(0.5)
       end
     end
   end

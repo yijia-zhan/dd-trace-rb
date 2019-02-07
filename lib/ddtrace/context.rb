@@ -53,6 +53,18 @@ module Datadog
       end
     end
 
+    def sampling_priority_rate
+      @mutex.synchronize do
+        @sampling_priority_rate
+      end
+    end
+
+    def sampling_priority_rate=(rate)
+      @mutex.synchronize do
+        @sampling_priority_rate = rate
+      end
+    end
+
     # Return the last active span that corresponds to the last inserted
     # item in the trace list. This cannot be considered as the current active
     # span in asynchronous environments, because some spans can be closed
@@ -163,6 +175,7 @@ module Datadog
       @parent_span_id = options.fetch(:span_id, nil)
       @sampled = options.fetch(:sampled, false)
       @sampling_priority = options.fetch(:sampling_priority, nil)
+      @sampling_priority_rate = options.fetch(:sampling_priority_rate, nil)
       @finished_spans = 0
       @current_span = nil
       @current_root_span = nil
@@ -189,6 +202,11 @@ module Datadog
       @trace.first.set_metric(
         Ext::DistributedTracing::SAMPLING_PRIORITY_KEY,
         @sampling_priority
+      )
+
+      @trace.first.set_metric(
+        Ext::DistributedTracing::SAMPLING_PRIORITY_RATE,
+        @sampling_priority_rate
       )
     end
 

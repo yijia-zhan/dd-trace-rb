@@ -179,15 +179,34 @@ module Datadog
       @priority_sampler.sample?(span)
     end
 
+    def priority_sample_rate(span)
+      case @priority_sampler
+      when RateSampler
+        @priority_sampler.sample_rate
+      when RateByServiceSampler
+        @priority_sampler.sample_rate(span)
+      else
+        nil # Custom sampler? Don't know how to handle this.
+      end
+    end
+
     def assign_priority!(span, priority)
+      rate = priority_sample_rate(span)
+
       if span.context
         span.context.sampling_priority = priority
+        span.context.sampling_priority_rate = rate
       else
         # Set the priority directly on the span instead, since otherwise
         # it won't receive the appropriate tag.
         span.set_metric(
           Ext::DistributedTracing::SAMPLING_PRIORITY_KEY,
           priority
+        )
+
+        span.set_metric(
+          Ext::DistributedTracing::SAMPLING_PRIORITY_RATE,
+          rate
         )
       end
     end
